@@ -193,141 +193,374 @@ ORDER BY reprobados DESC;
 
 
 -- 31. Obtener el promedio de calificaciones de los campers por estado.
+SELECT c.estado, AVG(ce.nota) as promedio_calificaciones
+FROM campers c
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY c.estado;
 
 -- 32. Listar las evaluaciones realizadas por un trainer específico.
+SELECT e.* 
+FROM evaluaciones e
+WHERE e.trainer_id = [ID_DEL_TRAINER];
 
 -- 33. Encontrar campers que han reprobado más de dos módulos.
+SELECT c.id, c.nombre, COUNT(*) as modulos_reprobados
+FROM campers c
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+WHERE ce.nota < 60  -- Suponiendo que 60 es la nota mínima para aprobar
+GROUP BY c.id, c.nombre
+HAVING COUNT(*) > 2;
 
 -- 34. Obtener el promedio de calificaciones de los campers por nivel de riesgo.
-
+SELECT c.nivel_riesgo, AVG(ce.nota) as promedio_calificaciones
+FROM campers c
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY c.nivel_riesgo;
 -- 35. Listar los módulos que tienen más campers inscritos.
+SELECT m.nombre, COUNT(cm.camper_id) as total_campers
+FROM modulos m
+JOIN camper_modulo cm ON m.id = cm.modulo_id
+GROUP BY m.nombre
+ORDER BY total_campers DESC;
 
 -- 36. Encontrar los módulos que tienen menos campers inscritos.
+SELECT m.nombre, COUNT(cm.camper_id) as total_campers
+FROM modulos m
+LEFT JOIN camper_modulo cm ON m.id = cm.modulo_id
+GROUP BY m.nombre
+ORDER BY total_campers ASC;
 
 -- 37. Obtener el promedio de calificaciones de los campers por tipo de programa.
-
--- 38. Listar las evaluaciones realizadas en un horario específico.
-
--- 39. Encontrar campers que han aprobado todos los módulos de una ruta.
+SELECT p.tipo, AVG(ce.nota) as promedio_calificaciones
+FROM programas p
+JOIN campers c ON p.id = c.programa_id
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY p.tipo;
 
 -- 40. Obtener el promedio de calificaciones de los campers por ubicación.
+SELECT u.nombre, AVG(ce.nota) as promedio_calificaciones
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY u.nombre;
+
+
+-- 40. Obtener el promedio de calificaciones de los campers por ubicación.
+SELECT u.nombre, AVG(ce.nota) as promedio_calificaciones
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY u.nombre;
 
 -- 41. Listar todas las rutas disponibles en el sistema.
+SELECT * FROM rutas;
 
 -- 42. Obtener la capacidad total de todas las ubicaciones.
+SELECT SUM(capacidad) as capacidad_total 
+FROM ubicaciones;
 
 -- 43. Encontrar las rutas con mayor número de campers asignados.
+SELECT r.nombre, COUNT(c.id) as total_campers
+FROM rutas r
+JOIN campers c ON r.id = c.ruta_id
+GROUP BY r.nombre
+ORDER BY total_campers DESC;
 
 -- 44. Identificar las ubicaciones con mayor capacidad.
+SELECT nombre, capacidad 
+FROM ubicaciones 
+ORDER BY capacidad DESC;
 
 -- 45. Listar las rutas que tienen más de un módulo.
+SELECT r.nombre, COUNT(rm.modulo_id) as total_modulos
+FROM rutas r
+JOIN ruta_modulo rm ON r.id = rm.ruta_id
+GROUP BY r.nombre
+HAVING COUNT(rm.modulo_id) > 1;
 
 -- 46. Obtener la ocupación actual de cada ubicación.
+SELECT u.nombre, u.capacidad, COUNT(c.id) as ocupacion_actual
+FROM ubicaciones u
+LEFT JOIN campers c ON u.id = c.ubicacion_id
+GROUP BY u.nombre, u.capacidad;
 
 -- 47. Encontrar las rutas que están actualmente activas.
+SELECT * FROM rutas WHERE estado = 'Activa';
 
 -- 48. Listar las ubicaciones que tienen más de un tipo de ubicación.
+SELECT u.nombre, COUNT(ut.tipo_id) as tipos_ubicacion
+FROM ubicaciones u
+JOIN ubicacion_tipo ut ON u.id = ut.ubicacion_id
+GROUP BY u.nombre
+HAVING COUNT(ut.tipo_id) > 1;
 
 -- 49. Obtener las rutas que tienen un SGDB principal específico.
+SELECT * FROM rutas WHERE sgdb_principal = '[NOMBRE_SGDB]';
 
 -- 50. Encontrar las ubicaciones que están asignadas a un horario específico.
+SELECT u.* 
+FROM ubicaciones u
+JOIN ubicacion_horario uh ON u.id = uh.ubicacion_id
+JOIN horarios h ON uh.horario_id = h.id
+WHERE h.rango_horario = '[HORARIO_ESPECIFICO]';
 
 -- 51. Listar las rutas que tienen más de un trainer asignado.
+SELECT r.nombre, COUNT(rt.trainer_id) as total_trainers
+FROM rutas r
+JOIN ruta_trainer rt ON r.id = rt.ruta_id
+GROUP BY r.nombre
+HAVING COUNT(rt.trainer_id) > 1;
 
 -- 52. Obtener la cantidad de módulos por ruta.
+SELECT r.nombre, COUNT(rm.modulo_id) as total_modulos
+FROM rutas r
+LEFT JOIN ruta_modulo rm ON r.id = rm.ruta_id
+GROUP BY r.nombre;
 
 -- 53. Encontrar las ubicaciones que tienen más de un camper asignado.
+SELECT u.nombre, COUNT(c.id) as total_campers
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+GROUP BY u.nombre
+HAVING COUNT(c.id) > 1;
 
 -- 54. Listar las rutas que tienen un módulo específico.
+SELECT r.* 
+FROM rutas r
+JOIN ruta_modulo rm ON r.id = rm.ruta_id
+WHERE rm.modulo_id = [ID_MODULO_ESPECIFICO];
 
 -- 55. Obtener las ubicaciones que tienen más de un tipo de programa.
+SELECT u.nombre, COUNT(DISTINCT p.tipo) as tipos_programa
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+JOIN programas p ON c.programa_id = p.id
+GROUP BY u.nombre
+HAVING COUNT(DISTINCT p.tipo) > 1;
 
 -- 56. Encontrar las rutas que tienen más de un estado final académico.
+SELECT r.nombre, COUNT(DISTINCT c.estado_academico) as estados_academicos
+FROM rutas r
+JOIN campers c ON r.id = c.ruta_id
+GROUP BY r.nombre
+HAVING COUNT(DISTINCT c.estado_academico) > 1;
 
 -- 57. Listar las ubicaciones que tienen más de un nivel de acceso.
+SELECT u.nombre, COUNT(DISTINCT c.nivel_acceso) as niveles_acceso
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+GROUP BY u.nombre
+HAVING COUNT(DISTINCT c.nivel_acceso) > 1;
 
 -- 58. Obtener las rutas que tienen más de un nivel de riesgo asociado.
+SELECT r.nombre, COUNT(DISTINCT c.nivel_riesgo) as niveles_riesgo
+FROM rutas r
+JOIN campers c ON r.id = c.ruta_id
+GROUP BY r.nombre
+HAVING COUNT(DISTINCT c.nivel_riesgo) > 1;
 
 -- 59. Encontrar las ubicaciones que tienen más de un estado de camper.
+SELECT u.nombre, COUNT(DISTINCT c.estado) as estados_camper
+FROM ubicaciones u
+JOIN campers c ON u.id = c.ubicacion_id
+GROUP BY u.nombre
+HAVING COUNT(DISTINCT c.estado) > 1;
 
 -- 60. Listar las rutas que tienen más de un tipo de empleabilidad.
+SELECT r.nombre, COUNT(DISTINCT c.tipo_empleabilidad) as tipos_empleabilidad
+FROM rutas r
+JOIN campers c ON r.id = c.ruta_id
+GROUP BY r.nombre
+HAVING COUNT(DISTINCT c.tipo_empleabilidad) > 1;
 
 -- 61. Listar todos los trainers activos en el sistema.
+SELECT * FROM trainers WHERE estado = 'Activo';
 
 -- 62. Obtener la cantidad de grupos asignados a cada trainer.
+SELECT t.nombre, COUNT(gt.grupo_id) as total_grupos
+FROM trainers t
+LEFT JOIN grupo_trainer gt ON t.id = gt.trainer_id
+GROUP BY t.nombre;
 
 -- 63. Encontrar trainers que tienen más de un tipo de programa asignado.
+SELECT t.nombre, COUNT(DISTINCT p.tipo) as tipos_programa
+FROM trainers t
+JOIN trainer_programa tp ON t.id = tp.trainer_id
+JOIN programas p ON tp.programa_id = p.id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT p.tipo) > 1;
 
 -- 64. Listar trainers que tienen más de una especialidad.
+SELECT t.nombre, COUNT(te.especialidad_id) as especialidades
+FROM trainers t
+JOIN trainer_especialidad te ON t.id = te.trainer_id
+GROUP BY t.nombre
+HAVING COUNT(te.especialidad_id) > 1;
 
 -- 65. Obtener los horarios asignados a cada trainer.
+SELECT t.nombre, h.dia, h.hora_inicio, h.hora_fin
+FROM trainers t
+JOIN trainer_horario th ON t.id = th.trainer_id
+JOIN horarios h ON th.horario_id = h.id;
 
 -- 66. Encontrar trainers que tienen más de un grupo activo.
+SELECT t.nombre, COUNT(g.id) as grupos_activos
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+WHERE g.estado = 'Activo'
+GROUP BY t.nombre
+HAVING COUNT(g.id) > 1;
 
 -- 67. Listar trainers que han emitido certificados en el último mes.
+SELECT DISTINCT t.*
+FROM trainers t
+JOIN certificados c ON t.id = c.trainer_id
+WHERE c.fecha_emision >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH);
 
 -- 68. Obtener el promedio de calificaciones de los campers por trainer.
+SELECT t.nombre, AVG(ce.nota) as promedio_calificaciones
+FROM trainers t
+JOIN evaluaciones e ON t.id = e.trainer_id
+JOIN camper_evaluacion ce ON e.id = ce.evaluacion_id
+GROUP BY t.nombre;
 
 -- 69. Encontrar trainers que tienen más de una ubicación asignada.
+SELECT t.nombre, COUNT(DISTINCT u.id) as ubicaciones
+FROM trainers t
+JOIN trainer_ubicacion tu ON t.id = tu.trainer_id
+JOIN ubicaciones u ON tu.ubicacion_id = u.id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT u.id) > 1;
 
 -- 70. Listar trainers que han registrado asistencia en el último mes.
+SELECT DISTINCT t.*
+FROM trainers t
+JOIN asistencia_trainer at ON t.id = at.trainer_id
+WHERE at.fecha >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH);
 
 -- 71. Obtener la cantidad de campers asignados a cada trainer.
+SELECT t.nombre, COUNT(c.id) as total_campers
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre;
 
 -- 72. Encontrar trainers que tienen más de un módulo asignado.
+SELECT t.nombre, COUNT(DISTINCT tm.modulo_id) as modulos
+FROM trainers t
+JOIN trainer_modulo tm ON t.id = tm.trainer_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT tm.modulo_id) > 1;
 
 -- 73. Listar trainers que tienen más de un estado de camper asignado.
+SELECT t.nombre, COUNT(DISTINCT c.estado) as estados_camper
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT c.estado) > 1;
 
 -- 74. Obtener la cantidad de evaluaciones realizadas por cada trainer.
+SELECT t.nombre, COUNT(e.id) as total_evaluaciones
+FROM trainers t
+LEFT JOIN evaluaciones e ON t.id = e.trainer_id
+GROUP BY t.nombre;
 
 -- 75. Encontrar trainers que tienen más de un nivel de riesgo asociado.
+SELECT t.nombre, COUNT(DISTINCT c.nivel_riesgo) as niveles_riesgo
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT c.nivel_riesgo) > 1;
 
 -- 76. Listar trainers que tienen más de un tipo de empleabilidad asignado.
+SELECT t.nombre, COUNT(DISTINCT c.tipo_empleabilidad) as tipos_empleabilidad
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT c.tipo_empleabilidad) > 1;
 
 -- 77. Obtener la cantidad de rutas asignadas a cada trainer.
+SELECT t.nombre, COUNT(rt.ruta_id) as rutas_asignadas
+FROM trainers t
+LEFT JOIN ruta_trainer rt ON t.id = rt.trainer_id
+GROUP BY t.nombre;
 
 -- 78. Encontrar trainers que tienen más de un estado final académico asociado.
+SELECT t.nombre, COUNT(DISTINCT c.estado_academico) as estados_academicos
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT c.estado_academico) > 1;
 
 -- 79. Listar trainers que tienen más de un nivel de acceso asignado.
+SELECT t.nombre, COUNT(DISTINCT c.nivel_acceso) as niveles_acceso
+FROM trainers t
+JOIN grupo_trainer gt ON t.id = gt.trainer_id
+JOIN grupos g ON gt.grupo_id = g.id
+JOIN campers c ON g.id = c.grupo_id
+GROUP BY t.nombre
+HAVING COUNT(DISTINCT c.nivel_acceso) > 1;
 
 -- 80. Obtener la cantidad de ubicaciones asignadas a cada trainer.
+SELECT t.nombre, COUNT(DISTINCT tu.ubicacion_id) as ubicaciones
+FROM trainers t
+LEFT JOIN trainer_ubicacion tu ON t.id = tu.trainer_id
+GROUP BY t.nombre;
 
 -- 81. Obtener el promedio de calificaciones de los campers por tipo de ubicación.
+SELECT ut.tipo, AVG(ce.nota) as promedio_calificaciones
+FROM ubicacion_tipos ut
+JOIN ubicaciones u ON ut.id = u.tipo_id
+JOIN campers c ON u.id = c.ubicacion_id
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY ut.tipo;
 
 -- 82. Listar los campers que tienen más de un acudiente asignado.
+SELECT c.id, c.nombre, COUNT(a.id) as acudientes
+FROM campers c
+JOIN acudientes a ON c.id = a.camper_id
+GROUP BY c.id, c.nombre
+HAVING COUNT(a.id) > 1;
 
 -- 83. Encontrar las rutas que tienen más de un SGDB alternativo.
+SELECT r.nombre, COUNT(rs.sgdb_id) as sgdb_alternativos
+FROM rutas r
+JOIN ruta_sgdb rs ON r.id = rs.ruta_id
+WHERE rs.tipo = 'Alternativo'
+GROUP BY r.nombre
+HAVING COUNT(rs.sgdb_id) > 1;
 
 -- 84. Obtener la cantidad de campers por estado de asistencia.
+SELECT estado_asistencia, COUNT(*) as total_campers
+FROM campers
+GROUP BY estado_asistencia;
 
 -- 85. Listar los módulos que tienen más de un tipo de programa asociado.
+SELECT m.nombre, COUNT(DISTINCT mp.programa_id) as tipos_programa
+FROM modulos m
+JOIN modulo_programa mp ON m.id = mp.modulo_id
+GROUP BY m.nombre
+HAVING COUNT(DISTINCT mp.programa_id) > 1;
 
 -- 86. Encontrar los campers que tienen más de un tipo de empleabilidad.
+SELECT c.id, c.nombre, COUNT(DISTINCT ce.tipo_empleabilidad) as tipos_empleabilidad
+FROM campers c
+JOIN camper_empleabilidad ce ON c.id = ce.camper_id
+GROUP BY c.id, c.nombre
+HAVING COUNT(DISTINCT ce.tipo_empleabilidad) > 1;
 
 -- 87. Obtener el promedio de calificaciones de los campers por tipo de persona.
-
--- 88. Listar los campers que tienen más de un rol asignado.
-
--- 89. Encontrar los trainers que tienen más de un nivel de acceso.
-
--- 90. Obtener la cantidad de campers por nivel de riesgo.
-
--- 91. Listar los campers que tienen más de un estado final académico.
-
--- 92. Encontrar los campers que tienen más de un tipo de programa asignado.
-
--- 93. Obtener el promedio de calificaciones de los campers por rol.
-
--- 94. Listar los campers que tienen más de una ubicación asignada.
-
--- 95. Encontrar los campers que tienen más de un tipo de ubicación asignado.
-
--- 96. Obtener la cantidad de campers por tipo de persona.
-
--- 97. Listar los campers que tienen más de un estado de asistencia.
-
--- 98. Encontrar los campers que tienen más de un nivel de acceso asignado.
-
--- 99. Obtener la cantidad de campers por tipo de empleabilidad.
-
--- 100. Listar los campers que tienen más de un tipo de programa asignado.
+SELECT c.tipo_persona, AVG(ce.nota) as promedio_calificaciones
+FROM campers c
+JOIN camper_evaluacion ce ON c.id = ce.camper_id
+GROUP BY c.tipo_persona;
