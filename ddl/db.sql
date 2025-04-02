@@ -1,3 +1,4 @@
+
 -- Creación de la base de datos
 CREATE DATABASE CampusLands;
 USE CampusLands;
@@ -62,13 +63,11 @@ CREATE TABLE Parentesco (
     descripcion VARCHAR(100)
 );
 
-
 CREATE TABLE Pais (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(50) NOT NULL,
     descripcion VARCHAR(200)
 );
-
 
 CREATE TABLE Estado (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -86,7 +85,6 @@ CREATE TABLE Ciudad (
     FOREIGN KEY (id_estado) REFERENCES Estado(id)
 );
 
-
 CREATE TABLE Ubicacion (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(50) NOT NULL,
@@ -98,7 +96,7 @@ CREATE TABLE Ubicacion (
     FOREIGN KEY (id_ciudad) REFERENCES Ciudad(id)
 );
 
-CREATE TABLE Direccion(
+CREATE TABLE Direccion (
     id INT PRIMARY KEY AUTO_INCREMENT,
     calle VARCHAR(255) NOT NULL,
     numero VARCHAR(10) NOT NULL,
@@ -106,7 +104,7 @@ CREATE TABLE Direccion(
     id_ciudad INT NOT NULL,
     id_estado INT NOT NULL,
     codigo_postal VARCHAR(20),
-    id_pais INT ,
+    id_pais INT NOT NULL,
     FOREIGN KEY (id_ciudad) REFERENCES Ciudad(id),
     FOREIGN KEY (id_estado) REFERENCES Estado(id),
     FOREIGN KEY (id_pais) REFERENCES Pais(id)
@@ -117,7 +115,7 @@ CREATE TABLE Acudiente (
     numero_identificacion VARCHAR(20) UNIQUE NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     apellido1 VARCHAR(50) NOT NULL,
-    apellido2 VARCHAR(50) NOT NULL,
+    apellido2 VARCHAR(50),
     id_direccion INT,
     telefono_principal VARCHAR(20) NOT NULL,
     telefono_secundario VARCHAR(20),
@@ -128,13 +126,12 @@ CREATE TABLE Acudiente (
     FOREIGN KEY (id_direccion) REFERENCES Direccion(id)
 );
 
-
 CREATE TABLE Camper (
     id INT PRIMARY KEY AUTO_INCREMENT,
     numero_identificacion VARCHAR(20) UNIQUE NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     apellido1 VARCHAR(50) NOT NULL,
-    apellido2 VARCHAR(50) NOT NULL,
+    apellido2 VARCHAR(50),
     id_direccion INT,
     telefono_contacto VARCHAR(20),
     id_estado INT NOT NULL,
@@ -145,8 +142,8 @@ CREATE TABLE Camper (
     certificado_emitido BOOLEAN DEFAULT FALSE,
     promedio_final DECIMAL(5,2),
     FOREIGN KEY (id_estado) REFERENCES EstadoCamper(id),
-    FOREIGN KEY (id_acudiente) REFERENCES Acudiente(id),
     FOREIGN KEY (id_nivel_riesgo) REFERENCES NivelRiesgo(id),
+    FOREIGN KEY (id_acudiente) REFERENCES Acudiente(id),
     FOREIGN KEY (id_direccion) REFERENCES Direccion(id)
 );
 
@@ -158,7 +155,7 @@ CREATE TABLE CamperAcudiente (
     fecha_asignacion DATE NOT NULL,
     FOREIGN KEY (id_camper) REFERENCES Camper(id),
     FOREIGN KEY (id_acudiente) REFERENCES Acudiente(id),
-    UNIQUE KEY (id_camper, id_acudiente)
+    UNIQUE (id_camper, id_acudiente)
 );
 
 CREATE TABLE Ruta (
@@ -168,7 +165,7 @@ CREATE TABLE Ruta (
     sgdb_principal VARCHAR(20) NOT NULL,
     sgdb_alternativo VARCHAR(20) NOT NULL,
     fecha_creacion DATE NOT NULL,
-    activa BOOLEAN DEFAULT TRUE,
+    activa BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE Modulo (
@@ -186,7 +183,7 @@ CREATE TABLE RutaModulo (
     id_modulo INT NOT NULL,
     FOREIGN KEY (id_ruta) REFERENCES Ruta(id),
     FOREIGN KEY (id_modulo) REFERENCES Modulo(id),
-    UNIQUE KEY (id_ruta, id_modulo)
+    PRIMARY KEY (id_ruta, id_modulo)
 );
 
 CREATE TABLE Horario (
@@ -202,11 +199,38 @@ CREATE TABLE Trainer (
     numero_identificacion VARCHAR(20) UNIQUE NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     apellido1 VARCHAR(50) NOT NULL,
-    apellido2 VARCHAR(50) NOT NULL,
+    apellido2 VARCHAR(50),
     especialidad VARCHAR(100),
     telefono_contacto VARCHAR(20),
-    email VARCHAR(100),
-)
+    email VARCHAR(100)
+);
+
+CREATE TABLE Grupo (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_ruta INT NOT NULL,
+    id_trainer_principal INT NOT NULL,
+    id_ubicacion INT NOT NULL,
+    id_horario INT NOT NULL,
+    nombre_grupo VARCHAR(50) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin_estimada DATE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    max_campers INT DEFAULT 30,
+    FOREIGN KEY (id_ruta) REFERENCES Ruta(id),
+    FOREIGN KEY (id_trainer_principal) REFERENCES Trainer(id),
+    FOREIGN KEY (id_ubicacion) REFERENCES Ubicacion(id),
+    FOREIGN KEY (id_horario) REFERENCES Horario(id)
+);
+
+CREATE TABLE CamperGrupo (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_camper INT NOT NULL,
+    id_grupo INT NOT NULL,
+    fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE,
+    FOREIGN KEY (id_camper) REFERENCES Camper(id),
+    FOREIGN KEY (id_grupo) REFERENCES Grupo(id),
+    UNIQUE (id_camper, id_grupo)
+);
 
 CREATE TABLE Asistencia (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -222,10 +246,10 @@ CREATE TABLE Asistencia (
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
     observaciones TEXT,
     FOREIGN KEY (id_camper) REFERENCES Camper(id),
-    FOREIGN KEY (id_grupo) REFERENCES AsignacionGrupo(id),
+    FOREIGN KEY (id_grupo) REFERENCES Grupo(id),
     FOREIGN KEY (id_trainer) REFERENCES Trainer(id),
     FOREIGN KEY (id_estado_asistencia) REFERENCES EstadoAsistencia(id),
-    UNIQUE KEY (id_camper, id_grupo, fecha)
+    UNIQUE (id_camper, id_grupo, fecha)
 );
 
 CREATE TABLE Egresado (
@@ -240,7 +264,7 @@ CREATE TABLE Egresado (
     nivel_ingles VARCHAR(30),
     habilidades_destacadas TEXT,
     proyectos_realizados TEXT,
-    id_tipo_empleabilidad INT DEFAULT 2,
+    id_tipo_empleabilidad INT,
     empresa_contratante VARCHAR(100),
     puesto_obtenido VARCHAR(100),
     salario DECIMAL(10,2),
@@ -250,21 +274,6 @@ CREATE TABLE Egresado (
     FOREIGN KEY (id_tipo_empleabilidad) REFERENCES TipoEmpleabilidad(id)
 );
 
-CREATE TABLE HistorialAcademico (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    id_camper INT NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
-    horas_completadas INT NOT NULL,
-    promedio DECIMAL(5,2) NOT NULL,
-    porcentaje_asistencia DECIMAL(5,2) NOT NULL,
-    id_modulo VARCHAR(100),
-    id_estado_final INT NOT NULL,
-    reconocimientos TEXT,
-    FOREIGN KEY (id_camper) REFERENCES Camper(id),
-    FOREIGN KEY (id_estado_final) REFERENCES EstadoFinalAcademico(id),
-    FOREIGN KEY (id_modulo) REFERENCES Modulo(id)
-);
 
 CREATE TABLE Rol (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -272,30 +281,15 @@ CREATE TABLE Rol (
     descripcion VARCHAR(200)
 );
 
-CREATE TABLE Grupo (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    id_ruta INT NOT NULL,
-    id_trainer_principal INT NOT NULL,
-    id_ubicacion INT NOT NULL,
-    id_horario INT NOT NULL,
-    nombre_grupo VARCHAR(50) NOT NULL,  
-    fecha_inicio DATE NOT NULL,
-    fecha_fin_estimada DATE NOT NULL,
-    activo BOOLEAN DEFAULT TRUE,
-    max_campers INT DEFAULT 30,
-    FOREIGN KEY (id_ruta) REFERENCES Ruta(id),
-    FOREIGN KEY (id_trainer_principal) REFERENCES Trainer(id),
-    FOREIGN KEY (id_ubicacion) REFERENCES Ubicacion(id),
-    FOREIGN KEY (id_horario) REFERENCES Horario(id)
-);
+
 CREATE TABLE CamperGrupo (
     id INT PRIMARY KEY AUTO_INCREMENT,
     id_camper INT NOT NULL,
     id_grupo INT NOT NULL,
-    fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_ingreso DATE NOT NULL,
     FOREIGN KEY (id_camper) REFERENCES Camper(id),
     FOREIGN KEY (id_grupo) REFERENCES Grupo(id),
-    UNIQUE KEY (id_camper, id_grupo)  
+    UNIQUE KEY (id_camper, id_grupo)
 );
 CREATE TABLE ProgresoCamper (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -309,4 +303,19 @@ CREATE TABLE ProgresoCamper (
     FOREIGN KEY (id_camper_grupo) REFERENCES CamperGrupo(id),
     FOREIGN KEY (id_modulo) REFERENCES Modulo(id),
     FOREIGN KEY (id_trainer) REFERENCES Trainer(id)
+);
+CREATE TABLE HistorialAcademico (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_camper INT NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    horas_completadas INT NOT NULL,
+    promedio DECIMAL(5,2) NOT NULL,
+    porcentaje_asistencia DECIMAL(5,2) NOT NULL,
+    id_modulo INT,
+    id_estado_final INT NOT NULL,
+    reconocimientos TEXT,
+    FOREIGN KEY (id_camper) REFERENCES Camper(id),
+    FOREIGN KEY (id_modulo) REFERENCES Modulo(id),
+    FOREIGN KEY (id_estado_final) REFERENCES EstadoFinalAcademico(id)
 );
